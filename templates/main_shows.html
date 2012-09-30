@@ -1,0 +1,19 @@
+$def with (delete=False, shows=True, name='', feed_name='', hq='', ignore='', id='')
+
+$if not delete and shows:
+    <form class="general" method="post" action="shows?id=$id">
+    <label for="name">Name</label><span id="showlist"><input type="text" id="name" value="$name" name="name" title="Name of the show" onchange="javascript:copyname()"/></span> <a href="javascript:ajaxRequest('showlist', 'showlist')" id="getshows">Get list</a><br />
+    <label for="feed_name">Feed name</label><input type="text" id="feed_name" value="$feed_name" name="feed_name" title="Name of the show, like it is in feeds" /><br />
+    <label for="hq">High quality</label><input type="checkbox" name="hq" title="Download this show in HQ" $hq/><br />
+    <label for="ignore">Ignore show</label><input type="checkbox" name="ignore" title="Ignore this show" $ignore/><br />
+    <br /><input type="submit" name="submit" value="Save" />
+    </form>
+
+    $if id != '':
+        <p><a href="shows?s=delete&id=$id">Delete rule</a></p>
+
+$elif delete:
+    <h3>Deleted rule: $id</h3>
+$elif not shows:
+    <h3>No such show in DB!</h3>
+

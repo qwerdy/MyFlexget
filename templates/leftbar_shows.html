@@ -1,0 +1,13 @@
+$def with (shows, urlquote)
+
+$code:
+    def show_name(show):
+        showname = show.name if show.hq != 1 else '<b>'+show.name+'</b>'
+        showname = showname if show.ignore != 1 else '<span id="ignored">'+showname+'</span>'
+        return showname
+
+<ul id="ul_leftbar">
+  $for show in shows:
+      <li><a href="shows?s=update&n=$:urlquote(show.name)">$:show_name(show)</a></li>
+  <br /><li><a href="shows?s=new">Add Show</a></li>
+</ul>

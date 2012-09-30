@@ -1,0 +1,8 @@
+use pip to install:
+- web.py
+- APScheduler
+
+
+run:
+
+python index.py 8088
