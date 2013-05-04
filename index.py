@@ -5,6 +5,7 @@ import threading
 from apscheduler.scheduler import Scheduler
 import subprocess
 
+import shared
 import model
 import functions
 from myepisodes import Myepisodes
@@ -32,14 +33,10 @@ sys.stdout = MyOutput('tmp/myflexget.txt')
 
 render = web.template.render('templates/')
 
-myep = None  #Holder for Myepisode instance
-sched = None #Holder for scheduler
-
 def look_for_shows(day = ''):
-    global atestvar, myep, sched
-    if myep and myep.logged_in():
+    if shared.myep is not None and shared.myep.logged_in():
         print('Fetching shows and generating config file!')
-        functions.generateyml(myep, sched, day=day)
+        functions.generateyml(day)
     else:
         print('Could not fetch shows, not logged in!')
 
@@ -51,42 +48,43 @@ urls = (
     "/settings", "settings",
     "/ajax", "ajax"
 )
+
+shared.init()
 app = web.application(urls, globals())
 
 class home:
     def GET(self):
-
-        global atestvar, myep, sched
-
         param = web.input(t=None,u=None)
         if param.t == 'start':
-            if not myep:
+            if shared.myep is None:
                 creds = model.get_credentials()
                 username = ''
                 password = ''
                 for cred in creds:
                     username = cred.myusername
                     password = cred.mypassword
-                myep = Myepisodes(username, password)
-                if myep.logged_in():
-                    sched = Scheduler()
-                    sched.start()
-                    sched.add_cron_job(look_for_shows, hour='23', minute='20')
+                shared.myep = Myepisodes(username, password)
+                if shared.myep.logged_in():
+                    shared.sched = Scheduler()
+                    shared.sched.start()
+                    shared.sched.add_cron_job(look_for_shows, hour='23', minute='20')
                     print('Schedule added')
                     raise web.seeother('')
                 else:
-                    myep = None
+                    shared.myep = None
                     return render.layout(render.main_home('failed'), render.leftbar_home(False))
             raise web.seeother('')
-        elif not myep or not myep.logged_in():
+        elif shared.myep is None or not shared.myep.logged_in():
             return render.layout(render.main_home('false'), render.leftbar_home(False))
         elif param.t == 'stop':
-            myep = None
-            sched.shutdown()
-            sched = None
+            shared.myep = None
+            shared.sched.shutdown()
+            shared.sched = None
             return render.layout(render.main_home('false'), render.leftbar_home(False))
         elif param.t == 'nextshows':
-            shows = myep.get_dayShows()
+            shows = shared.myep.get_dayShows()
+            ig_shows = model.get_ignored_shows_list()
+            shows = [x for x in shows if x['showname'] not in ig_shows]
             return render.layout(render.main_home('true', shows), render.leftbar_home(True))
         elif param.t == 'runnow':
             print('Running flexget manually!')
@@ -95,13 +93,13 @@ class home:
         elif param.t == 'config':
             if param.u == 'new':
                 print('Regenarting config file(tomorrow), demanded by user!')
-                functions.generateyml(myep)
+                functions.generateyml(sched=False)
             elif param.u == 'newtoday':
                 print('Regenarting config file(today), demanded by user!')
-                functions.generateyml(myep, day='today')
+                functions.generateyml(sched=False,day='today')
             elif param.u == 'newyesterday':
                 print('Regenarting config file(yesterday), demanded by user!')
-                functions.generateyml(myep, day='yesterday')
+                functions.generateyml(sched=False,day='yesterday')
             elif param.u == 'newsched':
                 print('Regenarting config file & schedules, demanded by user!')
                 look_for_shows()
@@ -132,7 +130,7 @@ class home:
                 content = ''
             return render.layout(render.main_home('logfile', fileout=content), render.leftbar_home(True))
         else:
-            jobs = sched.get_jobs()
+            jobs = shared.sched.get_jobs()
             return render.layout(render.main_home('true', jobs=jobs), render.leftbar_home(True))
 
 class shows:
@@ -187,14 +185,15 @@ class settings:
                 dq = 'hdtv',
                 hq = '720p',
                 lm = 0,
+                p_api = '',
             )
 
-            if params.rss == '' or params.flexget == '' or params.path == '':
-                return render.layout(render.main_settings_flexget('empty', params.email, params.rss, params.flexget, params.path, params.dq, params.hq, params.lm), render.leftbar_settings())
+            if params.rss == '' or params.flexget == '' or params.path == '' or params.dq == '' or params == '':
+                return render.layout(render.main_settings_flexget('empty', params.email, params.rss, params.flexget, params.path, params.dq, params.hq, params.lm, params.p_api), render.leftbar_settings())
             else:
                 error = functions.check_settings(params.flexget, params.path)
-                model.set_settings(params.email, params.rss, params.flexget, params.path, params.dq, params.hq, params.lm)
-                return render.layout(render.main_settings_flexget('saved', params.email, params.rss, params.flexget, params.path, params.dq, params.hq, params.lm, error), render.leftbar_settings())
+                model.set_settings(params.email, params.rss, params.flexget, params.path, params.dq, params.hq, params.lm, params.p_api)
+                return render.layout(render.main_settings_flexget('saved', params.email, params.rss, params.flexget, params.path, params.dq, params.hq, params.lm, params.p_api, error), render.leftbar_settings())
         elif params.s == 'myepisodes':
             params = web.input(
                 myusername = '',
@@ -224,7 +223,7 @@ class settings:
             settings = model.get_settings()
             for s in settings:
                 error = functions.check_settings(s.flexget, s.downloadpath)
-                return render.layout(render.main_settings_flexget('get', s.email, s.rssfeed, s.flexget, s.downloadpath, s.def_quality, s.high_quality, s.limit_number, error), render.leftbar_settings())
+                return render.layout(render.main_settings_flexget('get', s.email, s.rssfeed, s.flexget, s.downloadpath, s.def_quality, s.high_quality, s.limit_number, s.prowl_api, error), render.leftbar_settings())
         elif params.s == "myepisodes":
             creds = model.get_credentials()
             username = ''
@@ -243,15 +242,14 @@ class settings:
             return render.layout(render.main_settings_general('get', start, end), render.leftbar_settings())
 
 class ajax:
-    global myep
     def GET(self):
         output = ''
         get = web.input(q=None)
         if get.q == 'showlist':
-            if not myep or not myep.logged_in():
+            if shared.myep is None or not shared.myep.logged_in():
                 return render.ajax_shows(auth=False)
             else:
-                shows = myep.get_myShows()
+                shows = shared.myep.get_myShows()
                 return render.ajax_shows(shows)
 
 if __name__ == "__main__":

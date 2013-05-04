@@ -57,5 +57,5 @@ def get_credentials():
 def set_credentials(username, password):
     db.query("UPDATE settings set myusername=$username, mypassword=$password", vars=locals())
 
-def set_settings(email, rss, flexget, path, dq, hq, lm):
-    db.query("UPDATE settings set email=$email, rssfeed=$rss, flexget=$flexget, downloadpath=$path, def_quality=$dq, high_quality=$hq, limit_number=$lm", vars=locals())
+def set_settings(email, rss, flexget, path, dq, hq, lm, p_api):
+    db.query("UPDATE settings set email=$email, rssfeed=$rss, flexget=$flexget, downloadpath=$path, def_quality=$dq, high_quality=$hq, limit_number=$lm, prowl_api=$p_api", vars=locals())

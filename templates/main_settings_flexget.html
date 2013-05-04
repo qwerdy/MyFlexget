@@ -1,4 +1,4 @@
-$def with (action, email='', rss='', flexget='', path='', dq='', hq='', lm='', error=None)
+$def with (action, email='', rss='', flexget='', path='', dq='', hq='', lm='', p_api='', error=None)
 
 $if error:
     $for err in error:
@@ -17,6 +17,7 @@ $elif action == 'saved':
   <label for="dq">Default quality</label><input type="text" name="dq" title="Default quality to download" value="$dq" /><br />
   <label for="hq">High quality</label><input type="text" name="hq" title="Definition of high quality" value="$hq" /><br />
   <label for="lm">Limit start number</label><input type="text" name="lm" title="Number of torrents flexget should download at once" value="$lm" /><br />
+  <label for="p_api">Prowl API</label><input type="text" name="p_api" title="Prowl API key" value="$p_api" /><br />
   <br /><input type="submit" name="submit" value="Save" />
 </form><br />
 
