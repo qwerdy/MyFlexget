@@ -1,9 +1,0 @@
-$def with (shows=None, auth=True)
-
-$if not auth:
-    You are not logged in!
-$else:
-    <select id="name" name="name" id="ajax_select" onchange="javascript:copyname()">
-    $for show in shows:
-        <option value="$show">$show</option>
-    </select>
