@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block main %}
+{% for row in info %}
+<table style="padding: 20px;">
+    <tr>
+        <td>Title</td>
+        <td><a href="{{ row.url }}">{{ row.title }}</a></td>
+    </tr><tr>
+        <td>Task</td>
+        <td>{{ row.task }}</td>
+    </tr>
+    {% if row.filename %}
+    <tr>
+        <td>Filename</td>
+        <td>{{ row.filename }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+        <td>Time</td>
+        <td>{{ row.time }}</td>
+    </tr><tr>
+        <td>Details</td>
+        <td>{{ row.details }}</td>
+    </tr>
+</table>
+{% endfor %}
+{% endblock %}

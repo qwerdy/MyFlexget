@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block main %}
+<table cellspacing="10">
+{% for row in info %}
+    {% if row.downloaded %}
+        <tr><td style="color:green">✔</td> <td><b>{{ row.identifier }}<b></td><td>{{ row.first_seen }}</td><td>{{ row.title }}</td><td>{{ row.quality }}</td></tr>
+   {% else %}
+        <tr><td style="color:red">✗</td><td></td><td>{{ row.first_seen }}</td><td>{{ row.title }}</td><td>{{ row.quality }}</td></tr>
+    {% endif %}
+{% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<script type="text/javascript" src="/logs/static/js/logs.js"></script>
+<meta http-equiv="refresh" content="10">
+{% endblock %}
+
+{% block main %}
+<h3>Log files</h3>
+<textarea id="fileview" rows="20" cols="75" wrap="off">{{ content }}</textarea>
+<script type="text/javascript">
+	scrollBottom('fileview');
+</script>
+{% endblock %}

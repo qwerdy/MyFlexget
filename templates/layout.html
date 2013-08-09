@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>MyFlexget</title>
+		<meta charset="UTF-8" />
+		<script type="text/javascript" src="/static/js/main.js"></script>
+		<link rel="stylesheet" href="/static/css/layout.css" type="text/css" media="screen"/>
+		{% block head %}
+			{# UI plugin templates can insert content here #}
+		{% endblock %}
+	</head>
+	<body onload="setActive()">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+		  {% if messages %}
+		    <ul class="flashes">
+		    {% for category, message in messages %}
+		      <li class="{{ category }}">{{ message }}</li>
+		    {% endfor %}
+		    </ul>
+		  {% endif %}
+		{% endwith %}
+		<div id="header"></div>
+		<ul id="list-nav">
+			{% for item in menu %}
+			<li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+			{% endfor %}
+		</ul>
+		<div id="leftbar">
+			<ul id="ul_leftbar">
+				{% block leftbar %}
+				{% for item in leftbar %}
+				<li><a href="{{ item.href }}">{{ item.caption|safe }}</a></li>
+				{% else %}
+				<li><a href="">List not set!</a></li>
+				{% endfor %}
+				{% endblock %}
+			</ul>
+		</div>
+		<div id="main">
+			{% block main %}
+			<p><b>Error:</b> Main content not set!</p>
+			{% endblock %}
+		</div>
+	</body>
+</html>

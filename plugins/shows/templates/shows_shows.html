@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<script type="text/javascript" src="/shows/static/js/shows.js"></script>
+{% endblock %}
+
+{% block leftbar %}
+    {% for show in shows %}
+    	<li><a href="/shows/{{ show.id }}">
+    	{% if show.type == 0 %}
+        	{{ show.name }}
+        {% elif show.type == 1 %}
+        	<b>{{ show.name }}</b>
+        {% elif show.type == 2 %}
+        	<span id="ignored">{{ show.name }}</span>
+        {% else %}
+        	<span id="ignored"><b>{{ show.name }}</b></span>
+        {% endif %}
+        </a></li>
+    {% endfor %}
+    <br /><li><a href="/shows">Add Show</a></li>
+{% endblock %}
+
+{% block main %}
+    <form class="general" method="post" action="/shows/">
+    <label for="name">Name</label><span id="showlist"><input type="text" id="name" value="{{ info.name }}" name="name" title="Name of the show" onchange="javascript:copyname()" required/></span> <a href="javascript:ajaxRequest('/shows/ajax/showlist', 'showlist')" id="getshows">Get list</a><br />
+    <label for="feed_name">Feed name</label><input type="text" id="feed_name" value="{{ info.feed_name }}" name="feed_name" title="Name of the show, like it is in feeds" /><br />
+    <label for="hq">High quality</label><input type="checkbox" name="hq" title="Download this show in HQ" {% if info.hq %}checked{% endif %}/><br />
+    <label for="ignore">Ignore show</label><input type="checkbox" name="ignore" title="Ignore this show" {% if info.ignore %}checked{% endif %}/><br />
+    <input type="hidden" name="id" value="{{ info.id }}" />
+    <br /><input type="submit" name="submit" value="Save" />
+    </form>
+
+    {% if info.id %}
+    	<p><a href="/shows/delete/{{ info.id }}">Delete rule</a></p>
+    {% endif %}
+        
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+
+{% block main %}
+    {% for job in jobs %}
+        {% if loop.first %}
+            <h3>Main job:</h3>
+        {% else %}
+            <h3>Show fetching:</h3>
+        {% endif %}
+        <li>{{ job }}</li>
+    {% endfor %}
+    {% if offline is not defined %}
+    <p><a href="/runnow">Run flexget now</a></p>
+    {% endif %}
+{% endblock %}

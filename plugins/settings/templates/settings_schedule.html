@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block main %}
+<h3>Scheduler settings</h3>
+
+<form class="general" method="post" action="/settings/schedule">
+  <label for="start">Fetch start</label><input type="number" min="0" max="23" name="start" title="Hours after shows air before looking for torrent, default:1" value="{{ settings.start }}" required/><br />
+  <label for="end">Fetch end</label><input type="number" min="0" max="23" name="end" title="How long to look for torrent, default: 8" value="{{ settings.end }}" required/><br />
+  <p>Time to look for new shows:</p>
+  <label for="hour">Hour</label><input type="number" min="0" max="23" name="hour" title="Hour for when to look for new shows, default: 23" value="{{ settings.hour }}" required/><br />
+  <label for="minute">Minute</label><input type="number" min="0" max="59" name="minute" title="Minute for when to look for new shows, default: 20" value="{{ settings.minute }}" required/><br />
+  <br /><input type="submit" name="submit" value="Save" />
+</form>
+{% endblock %}

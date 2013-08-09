@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block main %}
+<h3>Config file:</h3>
+<form action="config" method="post">
+    <textarea name="content" rows="20" cols="75" wrap="off">{{ file }}</textarea>
+    <br /><input type="submit" name="submit" value="Save" />
+</form>
+<p>Tomorrow: <a href="/new/tomorrow">Regenerate!</a> - <a href="/sched/tomorrow">Regenerate & schedule!</a></p>
+<p>Today: <a href="/new/today">Regenerate!</a> - <a href="/sched/today">Regenerate & schedule!</a></p>
+<p>Yesterday: <a href="/new/yesterday">Regenerate!</a></p>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block main %}
+{% if shows %}
+    <h3>New shows:</h3>
+    <ul>
+    {% for show in shows %}
+        {% if not 'previous' in show and show['aquired'] == False %}
+            <li>{{show['showname']}}</li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+    <h4>Still looking for:</h4>
+    <ul>
+    {% for show in shows %}
+        {% if 'previous' in show and show['aquired'] == False %}
+            <li>{{show['showname']}}</li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+{% else %}
+    <h3>No new shows this day</h3>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+
+{% block main %}
+<h3>Myepisode settings</h3>
+
+<form class="general" method="post" action="/settings/myepisode">
+  <label for="username">Username</label><input type="text" name="username" title="Your username on myepisodes.com" value="{{ settings.username }}" required/><br />
+  <label for="passord">Password</label><input type="password" name="password" title="Your password on myepisodes.com" value="{{ settings.password }}" required/><br />
+  <br /><input type="submit" name="submit" value="Save" />
+</form>
+{% endblock %}
