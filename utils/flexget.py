@@ -40,7 +40,7 @@ def flexget(runnow=False):
         return
     devnull = open(os.devnull, 'w')
     subprocess.Popen([settings['flexget'], '--verbose', '--loglevel', 'verbose', '--cron', '-c', os.path.join(app_folder, 'tmp', 'testconfig.yml')],
-                     stdout=devnull, stderr=devnull)
+                     stdout=devnull, stderr=devnull, close_fds=True)
     devnull.close()
     if not runnow and sess.mysched is not None and len(sess.mysched.get_jobs()) == 1 and 'email' in settings:  # Last call ?!
         time.sleep(60)  # allow flexget to do its thing
@@ -57,7 +57,7 @@ def flexget(runnow=False):
             missing_shows = "All shows downloaded :)\n"
         msg = 'echo "Scheduler Done...\n\n ' + missing_shows + '" | mailx -s "MyFlexget" %s' % settings['email']
         print('Sending "scheduler done"  mail!')
-        subprocess.Popen(msg, shell=True)
+        subprocess.Popen(msg, shell=True, close_fds=True)
     db.close()
 
 
@@ -174,5 +174,5 @@ def generateyml(day='', sched=True, notify=True):
                 msg += "\n\nStill looking for:\n"+prowl_extra
             msg = 'echo "'+msg+'" | mailx -s "Todays episodes '+str(new_shows)+'" '+settings['email']
             print('Sending sched mail!')
-            subprocess.Popen(msg, shell=True)
+            subprocess.Popen(msg, shell=True, close_fds=True)
     return True
