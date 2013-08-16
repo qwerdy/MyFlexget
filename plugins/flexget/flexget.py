@@ -1,18 +1,18 @@
 from flask import render_template, Blueprint
-from myflexget import register_plugin, app_folder
+from myflexget import app_folder
 import os
 import sqlite3
 
 blueprint = Blueprint('flexget', __name__, url_prefix='/flexget', template_folder='templates')
 
 
-def db_execute(query):
+def db_execute(query, args=()):
     if not os.access(_db_file, os.R_OK):
         return None
 
     fg_db = sqlite3.connect(_db_file)
     fg_db.row_factory = sqlite3.Row
-    result = fg_db.execute(query).fetchall()
+    result = fg_db.execute(query, args).fetchall()
     fg_db.close()
     return result
 
@@ -41,7 +41,7 @@ def index():
 
 @blueprint.route('/<int:show_id>')
 def show(show_id):
-    show = db_execute('SELECT * FROM series_episodes AS se JOIN episode_releases AS er WHERE se.id = er.episode_id AND se.series_id = %s ORDER BY se.identifier DESC, er.downloaded DESC' % show_id) or []
+    show = db_execute('SELECT * FROM series_episodes AS se JOIN episode_releases AS er WHERE se.id = er.episode_id AND se.series_id = ? ORDER BY se.identifier DESC, er.downloaded DESC', [show_id]) or []
     return render_template('flexget_flexget.html', leftbar=_leftbar, info=show)
 
 
@@ -51,4 +51,5 @@ def history():
     return render_template('flexget_history.html', leftbar=_leftbar, info=show)
 
 
-register_plugin(blueprint, menu='Flexget')
+def register_plugin():
+    return blueprint, 'Flexget'

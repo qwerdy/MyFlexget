@@ -1,6 +1,6 @@
 from flask import render_template, Blueprint, request, flash
-from myflexget import register_plugin, app_folder
-from plugins._db import db_get, db_get_settings
+from myflexget import app_folder
+from plugins._db import db_get_settings, db_set_settings
 from utils.functions import value_in_range
 import os
 
@@ -12,6 +12,12 @@ _leftbar = []
 _leftbar.append({'href': '/settings', 'caption': 'Flexget'})
 _leftbar.append({'href': '/settings/myepisode', 'caption': 'Myepisode'})
 _leftbar.append({'href': '/settings/schedule', 'caption': 'Schedule'})
+
+
+def register_setting(id, name, function):
+    _leftbar.append({'href': '/settings/%s' % id, 'caption': name})
+    methods = ['GET', 'POST']
+    blueprint.add_url_rule('/%s' % id, methods=methods, view_func=function)
 
 
 def check_settings(flexget, path, script):
@@ -58,21 +64,17 @@ def index():
                 for error in errors:
                     flash(error, 'error')
             else:
-                db = db_get()
-                db.execute('delete from settings_new where id="flexget"')
-                db.execute('''insert into settings_new
-                              (key, value, id) values
-                              ("email", ?, "flexget"),
-                              ("rss", ?, "flexget"),
-                              ("flexget", ?, "flexget"),
-                              ("path", ?, "flexget"),
-                              ("dq", ?, "flexget"),
-                              ("hq", ?, "flexget"),
-                              ("limit", ?, "flexget"),
-                              ("p_api", ?, "flexget"),
-                              ("script_exec", ?, "flexget")''',
-                           [email, rss, flexget, path, dq, hq, limit, p_api, script_exec])
-                db.commit()
+                values = {'email': email,
+                          'rss': rss,
+                          'flexget': flexget,
+                          'path': path,
+                          'dq': dq,
+                          'hq': hq,
+                          'limit': limit,
+                          'p_api': p_api,
+                          'script_exec': script_exec,
+                          }
+                db_set_settings('flexget', values, clean=True)
                 flash('Flexget settings updated!')
                 settings = db_get_settings('flexget')
         else:
@@ -89,14 +91,10 @@ def myepisode():
         username = request.form.get('username', '')
         password = request.form.get('password', '')
         if username and password:
-            db = db_get()
-            db.execute('delete from settings_new where id="myepisode"')
-            db.execute('''insert into settings_new
-                          (key, value, id) values
-                          ("username", ?, "myepisode"),
-                          ("password", ?, "myepisode")''',
-                       [username, password])
-            db.commit()
+            values = {'username': username,
+                      'password': password,
+                      }
+            db_set_settings('myepisode', values, clean=True)
             flash('Myepisode settings updated!')
         else:
             flash('ERROR! Missing data!', 'error')
@@ -117,16 +115,12 @@ def schedule():
             flash('ERROR! Invalid data!', 'error')
             settings = request.form
         else:
-            db = db_get()
-            db.execute('delete from settings_new where id="schedule"')
-            db.execute('''insert into settings_new
-                          (key, value, id) values
-                          ("start", ?, "schedule"),
-                          ("end", ?, "schedule"),
-                          ("hour", ?, "schedule"),
-                          ("minute", ?, "schedule")''',
-                       [start, end, hour, minute])
-            db.commit()
+            values = {'start': start,
+                      'end': end,
+                      'hour': hour,
+                      'minute': minute,
+                      }
+            db_set_settings('schedule', values, clean=True)
             flash('Schedule settings updated!')
             settings = db_get_settings('schedule')
     else:  # GET
@@ -134,4 +128,5 @@ def schedule():
     return render_template('settings_schedule.html', settings=settings)
 
 
-register_plugin(blueprint, menu='Settings', order=200)
+def register_plugin():
+    return blueprint, 'settings', 200

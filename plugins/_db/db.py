@@ -11,22 +11,21 @@ DATABASE = os.path.join(dir_path, 'db.sqlite')
 if not os.access(DATABASE, os.R_OK):
     print('INFO: No database found, creating one')
     db = sqlite3.connect(DATABASE)
-    db.cursor().executescript(open(os.path.join(dir_path, 'schema.sql'), 'r').read())
+    db.executescript(open(os.path.join(dir_path, 'schema.sql'), 'r').read())
     db.commit()
     db.close()
-
-
-def db_get():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row
-    return db
 
 
 def db_get_raw():
     db = sqlite3.connect(DATABASE)
     db.row_factory = sqlite3.Row
+    return db
+
+
+def db_get():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = db_get_raw()
     return db
 
 
@@ -46,9 +45,20 @@ def db_execute(query, args=()):
 
 def db_get_settings(what):
     settings = {}
-    for x in db_query('select * from settings_new where id="%s"' % what):
+    for x in db_query('SELECT * FROM settings_new WHERE id=?', [what]):
         settings[x['key']] = x['value']
     return settings
+
+
+def db_set_settings(what, settings, clean=False):
+    db = db_get()
+    if clean:
+        db.execute('DELETE FROM settings_new WHERE id=?', [what])
+
+    #Dict to list of tuple with id in everyone
+    settings = [l+(what,) for l in settings.items()]
+    db.executemany('INSERT OR REPLACE INTO settings_new (key, value, id) VALUES (?, ?, ?)', settings)
+    db.commit()
 
 
 @app.teardown_appcontext

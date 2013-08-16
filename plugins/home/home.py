@@ -1,6 +1,6 @@
 from flask import render_template, redirect, abort, flash, request
 from flask import Blueprint
-from myflexget import register_plugin, app_folder
+from myflexget import app_folder
 from utils.myepisodes import Myepisodes
 from utils.flexget import generateyml, flexget
 from plugins._db import db_query, db_get_settings
@@ -89,9 +89,9 @@ def nextshows(day=''):
     if day == 'today':
         shows = sess.myep.get_dayShows('today')
     else:
-        shows = sess.myep.get_dayShows()
+        shows = sess.myep.get_dayShows()  # tomorrow
     ig_shows = [show[0] for show in db_query('select name from shows where ignore="1"')]
-    shows = [x for x in shows if x['showname'] not in ig_shows]
+    shows = [x for x in shows if x['showname'] not in ig_shows and not x['aquired']]
 
     return render_template('home_nextshows.html', shows=shows)
 
@@ -151,4 +151,5 @@ def sched(day):
     return redirect('/config')
 
 
-register_plugin(blueprint, menu='Home', order=1)
+def register_plugin():
+    return blueprint, 'Home', 1

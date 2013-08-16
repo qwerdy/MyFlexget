@@ -1,6 +1,4 @@
 from flask import render_template, Blueprint, request, flash, redirect
-
-from myflexget import register_plugin
 import utils.session as sess
 from plugins._db import db_query, db_execute
 
@@ -73,4 +71,5 @@ def ajax(request):
         return render_template('shows_ajax_shows.html')
 
 
-register_plugin(blueprint, menu='Shows', order=2)
+def register_plugin():
+    return blueprint, 'Shows', 2

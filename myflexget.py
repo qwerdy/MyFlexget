@@ -41,26 +41,35 @@ def load_plugins():
     import plugins
     dir = plugins.__path__[0]
 
+    #Find plugins:
     plugin_names = []
-    for file in os.listdir(dir):
+    for file in sorted(os.listdir(dir)):
         path = os.path.join(dir, file, '__init__.py')
         if os.path.isfile(path):
             plugin_names.append(file)
 
+    #Import plugins:
     for name in plugin_names:
         print('Loading plugin from: %s' % name)
         exec("import plugins.%s" % name)
 
+    #Register plugins in flask:
+    for name in plugin_names:
+        if hasattr(sys.modules['plugins.%s' % name], 'register_plugin'):
+            _register_plugin(*sys.modules['plugins.%s' % name].register_plugin())
+        else:
+            print('Plugin %s is an unregistered plugin')
 
-def register_plugin(plugin, menu=None, order=128):
+
+def _register_plugin(plugin, menu=None, order=128):
     print('  Registering plugin: %s' % plugin.name)
 
     app.register_blueprint(plugin)
     if menu:
-        register_menu(plugin.url_prefix, menu, order)
+        _register_menu(plugin.url_prefix, menu, order)
 
 
-def register_menu(href, caption, order=128):
+def _register_menu(href, caption, order=128):
     global _menu
     print('  Registering menu: %s -> %s' % (caption, href))
     _menu.append({'href': href, 'caption': caption, 'order': order})

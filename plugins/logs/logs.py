@@ -1,5 +1,5 @@
 from flask import render_template, Blueprint
-from myflexget import register_plugin, app_folder
+from myflexget import app_folder
 import os
 
 
@@ -35,4 +35,5 @@ def logfile(logfile):
     return render_template('logs_logs.html', content=content)
 
 
-register_plugin(blueprint, menu='Logs', order=255)
+def register_plugin():
+    return blueprint, 'Logs', 255
