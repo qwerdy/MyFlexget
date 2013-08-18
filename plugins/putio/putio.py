@@ -1,7 +1,6 @@
 from flask import render_template, Blueprint, request, redirect, flash
-from myflexget import app_folder
 from plugins._settings import register_setting
-from utils.putio import Client as putio
+from putio_ext.putio import Client
 from plugins._db import db_get_settings, db_set_settings
 
 import os
@@ -17,8 +16,8 @@ _leftbar = []
 _leftbar.append({'href': '/putio', 'caption': 'Generic'})
 _leftbar.append({'href': '/putio/episode', 'caption': 'Episode'})
 
-
-_script = os.path.join(app_folder, 'utils', 'putio_download.py')
+_script = os.path.dirname(os.path.abspath(__file__))
+_script = os.path.join(_script, 'putio_ext', 'putio_download.py')
 
 
 @blueprint.context_processor
@@ -69,7 +68,7 @@ def _get_transfers():
     settings = db_get_settings('putio')
     if not 'token' in settings:
         return
-    client = putio(settings['token'])
+    client = Client(settings['token'])
     return client.Transfer.list()
 
 
