@@ -1,0 +1,11 @@
+{% extends "putio_putio.html" %}
+{% block form %}
+<form class="general" method="post" action="/putio">
+    <label for="url">URL</label><input type="url" name="url" title="URL to download, torrent or magnet" placeholder="URL, torrent or magnet" required/><br />
+    <label for="showname">Show name</label><input type="text" name="showname" title="Name of the show" placeholder="Show name" required/><br />
+    <label for="season">sXeX</label><input type="number" name="season" min="0" placeholder="season" required/>
+    <label for="episode"></label><input type="number" name="episode" min="0" placeholder="episode" required/><br />
+    <br />
+    <input type="submit" name="submit" value="Start" />
+</form>
+{% endblock %}

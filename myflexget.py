@@ -58,7 +58,7 @@ def load_plugins():
         if hasattr(sys.modules['plugins.%s' % name], 'register_plugin'):
             _register_plugin(*sys.modules['plugins.%s' % name].register_plugin())
         else:
-            print('Plugin %s is an unregistered plugin')
+            print('Plugin %s is an unregistered plugin' % name)
 
 
 def _register_plugin(plugin, menu=None, order=128):

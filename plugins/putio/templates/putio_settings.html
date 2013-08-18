@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+
+{% block main %}
+<h3>Put.io settings</h3>
+
+<form class="general" method="post" action="/settings/putio">
+  <label for="token">Token</label><input type="text" name="token" title="Your api token on put.io" value="{{ settings.token }}" required/><br />
+  <label for="work_dir">Work dir</label><input type="text" name="work_dir" title="Folder to store tmp, pickle and pid file in" value="{{ settings.work_dir }}" required/><br />
+  <label for="show_dir">Show dir</label><input type="text" name="show_dir" title="Where shows will be downloaded" value="{{ settings.show_dir }}" required/><br />
+  <label for="movie_dir">Movie dir</label><input type="text" name="movie_dir" title="Where movies will be downloaded" value="{{ settings.movie_dir }}" required/><br />
+  <label for="generic_dir">Generic dir</label><input type="text" name="generic_dir" title="Where generic files will be downloaded" value="{{ settings.generic_dir }}" required/><br />
+  <label for="log_file">Log file</label><input type="text" name="log_file" title="Log file for script" value="{{ settings.log_file }}" required/><br />
+  <br /><input type="submit" name="submit" value="Save" />
+</form>
+{% endblock %}
