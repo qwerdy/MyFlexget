@@ -8,9 +8,10 @@ from datetime import date, timedelta
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 
+
 class Myepisodes(object):
     def __init__(self, username, password):
-        self.url = "http://myepisodes.com/login.php"
+        self.url = "http://www.myepisodes.com/login.php"
         self.values = {'username': username, 'password': password, 'action': 'Login', 'u': ''}
         self.data = urllib.urlencode(self.values)
         self.cookiefile = os.path.join(cur_dir, 'myepisodes.cookie')
@@ -38,7 +39,7 @@ class Myepisodes(object):
         return self.loggedIn
 
     def get_myShows(self):
-        url = 'http://myepisodes.com/shows.php?type=manage'
+        url = 'http://www.myepisodes.com/shows.php?type=manage'
         response = self.opener.open(url).read().replace("&", "_amp;_")
         if response.find('(Logout)') < 0:   # Not logged in?
             self.login(True)                # Try to log in
@@ -54,7 +55,7 @@ class Myepisodes(object):
         return parser.get_shows()
 
     def get_dayShows(self, day='tomorrow'):
-        url = 'http://myepisodes.com/views.php'
+        url = 'http://www.myepisodes.com/views.php'
         response = self.opener.open(url).read().replace("&", "_amp;_")  # Something doesnt like the ampersign
         if response.find('(Logout)') < 0:
             self.login(True)
@@ -87,7 +88,7 @@ class Myepisodes(object):
                     break
         if show_id is None:
             return False
-        url = 'http://myepisodes.com/views.php?type=save'
+        url = 'http://www.myepisodes.com/views.php?type=save'
         values = {'action': 'Save Status', show_id: 'on', 'checkboxes': show_id[1:]}
         data = urllib.urlencode(values)
         self.opener.open(url, data)

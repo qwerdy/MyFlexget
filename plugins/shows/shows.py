@@ -1,6 +1,6 @@
 from flask import render_template, Blueprint, request, flash, redirect
 import utils.session as sess
-from plugins._db import db_query, db_execute
+from plugins.db import db_query, db_execute
 
 
 blueprint = Blueprint('shows', __name__, url_prefix='/shows', template_folder='templates', static_folder='static')

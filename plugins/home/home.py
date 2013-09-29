@@ -3,7 +3,7 @@ from flask import Blueprint
 from myflexget import app_folder
 from utils.myepisodes import Myepisodes
 from utils.flexget import generateyml, flexget
-from plugins._db import db_query, db_get_settings
+from plugins.db import db_query, db_get_settings
 import utils.session as sess
 
 from apscheduler.scheduler import Scheduler

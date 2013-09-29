@@ -69,7 +69,12 @@ def main():
     pid = str(os.getpid())
     pidfile = WORK_DIR + '/putio_flexget.pid'
 
-    if os.path.isfile(pidfile):
+    try:
+        fd = os.open(pidfile, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+    except OSError:
+        fd = 0
+
+    if not fd:
         print('%s already exists. Exiting' % pidfile)
         logger.warning('%s already exists. Exiting' % pidfile)
         return False
@@ -77,8 +82,9 @@ def main():
         client = putio.Client(TOKEN)
         if not client.check_token():
             logger.error('Invalid token. Exiting')
+            os.unlink(pidfile)
             return False
-        open(pidfile, 'w').write(pid)
+        os.write(fd, pid)
 
     #Go through all the downloads:
     while(True):

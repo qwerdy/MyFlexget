@@ -1,6 +1,6 @@
 from flask import render_template, Blueprint, request, flash
 from myflexget import app_folder
-from plugins._db import db_get_settings, db_set_settings
+from plugins.db import db_get_settings, db_set_settings
 from utils.functions import value_in_range
 import os
 

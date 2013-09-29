@@ -113,6 +113,7 @@ class Client(object):
             response = json.loads(response.content)
         except ValueError:
             logger.error('Received invalid JSON from put.io')
+            logger.error('invalid-content: %s', response.content)
             response = {'status': 'ERROR',
                         'error_type': 'JSON ValueError',
                         'error_message': 'Received invalid JSON from put.io'}
@@ -172,18 +173,24 @@ class _File(object):
         filename = filename.groups()[0] or filename.groups()[1]
         total_length = response.headers.get('Content-Length')
 
-        with open(os.path.join(dest, filename), 'wb') as f:
+        with open(os.path.join(dest, filename), 'ab') as f:
             current_time = datetime.datetime.now()
             if total_length is None:
+                f.seek(0)  # overwrite existing file
                 f.write(response.content)  # No error checkking can be done, just dump data
             else:
                 total_length = int(total_length)
                 logger.info('Total size of file: %s MB' % (total_length / 1024 / 1024))
-                self._write_data_with_progress(f, response, total_length)
+                if not f.tell():
+                    #New file, start downloading
+                    self._write_data_with_progress(f, response, total_length)
+                else:
+                    logger.info('Continuing previously partially downloaded file: %s' % filename)
 
                 #If we did not receive everything, try to download missing chunks.
                 attempts = 1
-                MAX_ATTEMPTS = 10
+                MAX_ATTEMPTS = 5
+                old_tell = f.tell()
                 while f.tell() != total_length:
                     logger.warning('Download failed (%s/%s), will try to resume. Got %s of %s bytes (%s %%)'
                                    % (attempts, MAX_ATTEMPTS, f.tell(), total_length, int(f.tell() * 100 / total_length)))
@@ -201,11 +208,16 @@ class _File(object):
                     logger.info('Getting partial file with size: %s MB' % (partial_length / 1024 / 1024))
                     self._write_data_with_progress(f, response, partial_length)
 
-                    if attempts == MAX_ATTEMPTS:
-                    #If we still did not get the whole file, give up.
-                        logger.error('Failed to download rest of file after %s tries. Got %s of %s bytes' % (attempts, f.tell(), total_length))
-                        return
-                    attempts += 1
+                    #If we did not progress, stop trying after MAX_ATTEMPTS
+                    if f.tell() == old_tell:
+                        if attempts == MAX_ATTEMPTS:  # Give up:
+                            logger.error('Failed to download rest of file after %s tries. Got %s of %s bytes' % (attempts, f.tell(), total_length))
+                            return
+                        attempts += 1
+                    #If we DID progress, reset variables.
+                    else:
+                        old_tell = f.tell()
+                        attempts = 1
 
                 download_time = datetime.datetime.now() - current_time
                 download_speed = int(f.tell() / download_time.total_seconds() / 1024)  # in KB/s

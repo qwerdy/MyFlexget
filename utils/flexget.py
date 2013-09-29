@@ -1,5 +1,5 @@
 import utils.session as sess
-from plugins._db import db_get_raw
+from plugins.db import db_get_raw
 from utils import prowlpy
 from myflexget import app_folder
 

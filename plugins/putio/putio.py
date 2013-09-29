@@ -1,7 +1,7 @@
 from flask import render_template, Blueprint, request, redirect, flash
-from plugins._settings import register_setting
+from plugins.settings import register_setting
 from putio_ext.putio import Client
-from plugins._db import db_get_settings, db_set_settings
+from plugins.db import db_get_settings, db_set_settings
 
 import os
 import sys
