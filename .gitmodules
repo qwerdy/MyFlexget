@@ -1,0 +1,3 @@
+[submodule "plugins/putio/putio_ext"]
+	path = plugins/putio/putio_ext
+	url = git@github.com:qwerdy/putio.git
