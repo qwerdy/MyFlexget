@@ -39,7 +39,7 @@ def flexget(runnow=False):
         db.close()
         return
     devnull = open(os.devnull, 'w')
-    subprocess.Popen([settings['flexget'], '--verbose', '--loglevel', 'verbose', '--cron', '-c', os.path.join(app_folder, 'tmp', 'testconfig.yml')],
+    subprocess.Popen([settings['flexget'], '-c', os.path.join(app_folder, 'tmp', 'testconfig.yml'), 'execute', '-v', '--cron'],
                      stdout=devnull, stderr=devnull, close_fds=True)
     devnull.close()
     if not runnow and sess.mysched is not None and len(sess.mysched.get_jobs()) == 1 and 'email' in settings:  # Last call ?!
@@ -124,6 +124,7 @@ def generateyml(day='', sched=True, notify=True):
 
         f.write('tasks:\n')
         f.write('  feed1:\n')
+        f.write('    verify_ssl_certificates: no\n')
         f.write('    inputs:\n')
         for feed in settings['rss'].split(';'):
             f.write('      - rss: ' + feed + '\n')
@@ -136,7 +137,7 @@ def generateyml(day='', sched=True, notify=True):
             f.write('      ' + settings['hq'] + ':\n')
             for show in hq_shows:
                 f.write('        - ' + show + '\n')
-        f.write('    download: ' + settings['path'] + '\n')
+        #f.write('    download: ' + settings['path'] + '\n')
         if 'script_exec' in settings:
             f.write('    exec: ' + settings['script_exec'] + '\n')
 

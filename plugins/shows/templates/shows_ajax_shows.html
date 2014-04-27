@@ -2,12 +2,12 @@
 Unkown request!
 {% else %}
 	{% if authed %}
-	<select id="name" name="name" id="ajax_select" onchange="javascript:copyname()">
-	{% for show in shows %}
-	    <option value="{{ show }}">{{ show }}</option>
-	{% endfor %}
-	</select>
+		<select name="name" id="ajax_select" onchange="javascript:copyname()">
+		{% for show in shows %}
+			<option value="{{ show }}">{{ show }}</option>
+		{% endfor %}
+		</select>
 	{% else %}
-	You are not logged in!
+		You are not logged in!
 	{% endif %}
 {% endif %}

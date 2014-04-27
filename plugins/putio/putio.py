@@ -9,12 +9,13 @@ import subprocess
 import fileinput
 import re
 
-blueprint = Blueprint('putio', __name__, url_prefix='/putio', template_folder='templates')
+blueprint = Blueprint('putio', __name__, url_prefix='/putio', template_folder='templates', static_folder='static')
 
 
 _leftbar = []
 _leftbar.append({'href': '/putio', 'caption': 'Generic'})
 _leftbar.append({'href': '/putio/episode', 'caption': 'Episode'})
+_leftbar.append({'href': '/putio/clean', 'caption': 'Clean list'})
 
 _script = os.path.dirname(os.path.abspath(__file__))
 _script = os.path.join(_script, 'putio_ext', 'putio_download.py')
@@ -30,7 +31,7 @@ def index():
     if request.method == 'POST':
         url = request.form.get('url', '')
         title = request.form.get('title', '')
-        showname = request.form.get('showname', '')
+        showname = request.form.get('name', '')
         season = request.form.get('season', '')
         episode = request.form.get('episode', '')
         button = request.form.get('submit', '')
@@ -62,6 +63,15 @@ def index():
 @blueprint.route('/episode')
 def episode():
     return render_template('putio_episode.html')
+
+
+@blueprint.route('/clean')
+def clean():
+    settings = db_get_settings('putio')
+    if 'token' in settings:
+        client = Client(settings['token'])
+        client.Transfer.clean()
+    return redirect('/putio')
 
 
 def _get_transfers():

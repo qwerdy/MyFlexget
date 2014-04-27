@@ -9,22 +9,28 @@ function setActive() { //Sets active tabbar
 	tab[0].id='active';
 }
 
-function ajaxRequest(str, replace) {
+function ajaxRequest(str, replace, cb) {
 
-	document.getElementById(replace).innerHTML = "<img src=\"/static/img/ajax-loader.gif\">";
-	var http = false;
-	if(navigator.appName == "Microsoft Internet Explorer") {
-		http = new ActiveXObject("Microsoft.XMLHTTP");
-	} else {
-		http = new XMLHttpRequest();
+	if(replace) {
+		document.getElementById(replace).innerHTML = "<img src=\"/static/img/ajax-loader.gif\">";
 	}
+
+	var http = new XMLHttpRequest();
 	http.open("GET", str, true);
 	http.onreadystatechange=function() {
 		if(http.readyState == 4  && http.status == 200) {
-			document.getElementById(replace).innerHTML = http.responseText;
+			if(cb) {
+				cb(http.responseText);
+			} else {
+				document.getElementById(replace).innerHTML = http.responseText;
+			}
 		}
 		else {
-			document.getElementById(replace).innerHTML = "Error getting "+str;
+			if(cb) {
+				cb(false);
+			} else {
+				document.getElementById(replace).innerHTML = "Error getting "+str;
+			}
 		}
 	}
 	http.send();

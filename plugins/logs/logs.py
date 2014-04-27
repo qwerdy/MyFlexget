@@ -27,7 +27,7 @@ def logfile(logfile):
     log_file = os.path.join(app_folder, 'tmp', logfile)
     if os.access(log_file, os.R_OK):
         f = open(log_file, 'r')
-        content = f.read()
+        content = f.read().decode('utf-8')
         f.close()
     else:
         content = ''

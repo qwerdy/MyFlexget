@@ -1,8 +1,14 @@
 {% extends "putio_putio.html" %}
+
+{% block head %}
+<script type="text/javascript" src="/putio/static/js/putio.js"></script>
+{% endblock %}
+
 {% block form %}
 <form class="general" method="post" action="/putio">
-    <label for="url">URL</label><input type="url" name="url" title="URL to download, torrent or magnet" placeholder="URL, torrent or magnet" required/><br />
-    <label for="showname">Show name</label><input type="text" name="showname" title="Name of the show" placeholder="Show name" required/><br />
+    <label for="url">URL</label><input type="url" onchange="findEpisodeNumber(this)" name="url" title="URL to download, torrent or magnet" placeholder="URL, torrent or magnet" required/><br />
+    <label for="name">Show Name</label><span id="showlist"><input type="text" id="name" name="name" title="Name of the show" placeholder="Show name" required/></span> <a href="javascript:ajaxRequest('/shows/ajax/showlist', 'showlist')" id="getshows">Get list</a><br />
+    <label for="autocomplete" id="label_autocomplete" style="color:grey;">Use</label><select name="autocomplete" id="autocomplete" onchange="" disabled="true"></select><br />
     <label for="season">sXeX</label><input type="number" name="season" min="0" placeholder="season" required/>
     <label for="episode"></label><input type="number" name="episode" min="0" placeholder="episode" required/><br />
     <br />

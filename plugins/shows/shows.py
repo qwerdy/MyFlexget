@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, request, flash, redirect
+from flask import render_template, Blueprint, request, flash, redirect, jsonify
 import utils.session as sess
 from plugins.db import db_query, db_execute
 
@@ -61,12 +61,15 @@ def delete(showid):
 
 @blueprint.route('/ajax/<request>')
 def ajax(request):
+    if sess.myep is None or not sess.myep.logged_in():
+        return render_template('shows_ajax_shows.html', authed=False)
+
     if request == 'showlist':
-        if sess.myep is None or not sess.myep.logged_in():
-            return render_template('shows_ajax_shows.html', authed=False)
-        else:
-            shows = sess.myep.get_myShows()
-            return render_template('shows_ajax_shows.html', shows=shows, authed=True)
+        shows = sess.myep.get_myShows()
+        return render_template('shows_ajax_shows.html', shows=shows, authed=True)
+    elif request == 'shows':
+        shows = sess.myep.get_myShows()
+        return jsonify(shows=list(shows))
     else:
         return render_template('shows_ajax_shows.html')
 
