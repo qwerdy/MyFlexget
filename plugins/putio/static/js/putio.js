@@ -6,6 +6,7 @@ function findEpisodeNumber(input) {
 	var url = input.value,
 	    season = document.querySelectorAll('input[name="season"]')[0],
 	    episode = document.querySelectorAll('input[name="episode"]')[0],
+	    name = document.querySelectorAll('input[name="name"]')[0],
 	    match;
 
 	match = url.toLowerCase().match(regPatt);
@@ -15,6 +16,24 @@ function findEpisodeNumber(input) {
 	if(match && match.length === 3) {
 		season.value = parseInt(match[1], 10);
 		episode.value = parseInt(match[2], 10);
+	}
+
+	var dn = url.indexOf('dn=');
+	if(dn != -1) {
+		dn += 3;
+		var end = url.indexOf('&', dn),
+		    urlName;
+		if(match && match.index) {
+			urlName = url.substr(dn, match.index-dn-1)
+		} else if(end != -1) {
+			urlName = url.substr(dn, end-dn);
+		} else {
+			urlName = url.substr(dn);
+		}
+
+		urlName = urlName.replace(/\+/g, ' ');
+		urlName = urlName.replace(/\b./g, function(m){ return m.toUpperCase(); });
+		name.value = urlName;
 	}
 
 	var name = document.querySelectorAll('input[name="name"]')[0];
