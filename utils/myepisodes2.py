@@ -72,7 +72,7 @@ class Myepisodes(object):
     def get_dayShows(self, day='tomorrow', try_login=True):
         url = 'http://www.myepisodes.com/ajax/service.php?mode=view_privatelist'
 
-        values = {'eps_filters[]': [1, 2]}
+        values = {'eps_filters[]': [1, 2, 4096]}
         response = self.s.post(url, data=values)
         if response.text.find('<table class="mylist" ') < 0: # ....
             if not try_login:
