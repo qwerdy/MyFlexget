@@ -6,7 +6,7 @@ from utils.flexget import generateyml, flexget
 from plugins.db import db_query, db_get_settings
 import utils.session as sess
 
-from apscheduler.scheduler import Scheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 import os
 
 
@@ -59,9 +59,9 @@ def start():
         elif not settings:
             flash('Missing flexget settings', 'error')
         else:
-            sess.mysched = Scheduler()
+            sess.mysched = BackgroundScheduler()
             sess.mysched.start()
-            sess.mysched.add_cron_job(generateyml, hour=sched['hour'], minute=sched['minute'])
+            sess.mysched.add_job(generateyml, 'cron', hour=sched['hour'], minute=sched['minute'])
             flash('Schedule added!')
     else:
         flash('Myepisodes failed login! Check credentials!', 'error')

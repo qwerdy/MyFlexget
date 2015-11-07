@@ -158,7 +158,7 @@ def generateyml(day='', sched=True, notify=True):
             elif day == 'yesterday':
                 print('Scheduler would never be runned')
                 return
-            sess.mysched.add_cron_job(flexget, year=tomorrow.year, month=tomorrow.month, day=tomorrow.day, hour=str(f_start)+'-'+str(f_end))
+            sess.mysched.add_job(flexget, 'cron', year=tomorrow.year, month=tomorrow.month, day=tomorrow.day, hour=str(f_start)+'-'+str(f_end))
 
     if new_shows == 0:
         prowl_msg = 'No new episodes today  :('
