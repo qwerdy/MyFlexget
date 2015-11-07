@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint
+from flask import render_template, Blueprint, flash, redirect
 from myflexget import app_folder
 import os
 
@@ -32,7 +32,22 @@ def logfile(logfile):
     else:
         content = ''
 
-    return render_template('logs_logs.html', content=content)
+    return render_template('logs_logs.html', content=content, logfile=logfile)
+
+
+@blueprint.route('/clear/<logfile>')
+def logfile_clear(logfile):
+    log_file = os.path.join(app_folder, 'tmp', logfile)
+    if not os.path.isfile(log_file):
+        flash('Not a valid log file: %s' % log_file)
+    else:
+        if os.access(log_file, os.W_OK):
+            open(log_file, 'w').close()
+            flash('Cleared logfile: %s' % log_file)
+        else:
+            flash('Permission error while clearing logfile: %s' % log_file)
+
+    return redirect('/logs/%s' % logfile)
 
 
 def register_plugin():

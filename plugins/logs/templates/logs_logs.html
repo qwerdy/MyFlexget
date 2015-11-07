@@ -6,6 +6,9 @@
 
 {% block main %}
 <h3>Log files</h3>
+{% if logfile %}
+	<a href="/logs/clear/{{ logfile }}">Clear log</a>
+{% endif %}
 <textarea id="fileview" rows="20" cols="75" wrap="off">{{ content }}</textarea>
 <script type="text/javascript">
 	scrollBottom('fileview');
