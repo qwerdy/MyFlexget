@@ -1,7 +1,7 @@
 from flask import render_template, redirect, abort, flash, request
 from flask import Blueprint
 from myflexget import app_folder
-from utils.myepisodes import Myepisodes
+from utils.myepisodes2 import Myepisodes
 from utils.flexget import generateyml, flexget
 from plugins.db import db_query, db_get_settings
 import utils.session as sess
