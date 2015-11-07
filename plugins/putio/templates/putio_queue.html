@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block main %}
+
+{% if pickle %}
+	<form class="general" method="post" action="/putio/queue/{{ pickle }}">
+	    <label>-</label><input type="text" name="oldName" value="{{ pickle }}" disabled/><br />
+	    <label>-</label><input type="text" name="newName" title="New pickle name" value="{{ pickle }}" required/><br />
+	    <br />
+	    <input type="submit" name="submit" value="Rename" /><br />
+	</form>
+{% endif %}
+
+{% if queue %}
+    <h3>Queue</h3>
+    <ul>
+    {% for q in queue %}
+        <li>{{ q }} <small>[<a onclick="return confirm('Are you sure?');" href="/putio/delete/pickle/{{ q }}">Delete</a> - <a href="/putio/queue/{{ q }}">Edit</a>]</small></li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+{% endblock %}

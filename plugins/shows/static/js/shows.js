@@ -1,3 +1,11 @@
 function copyname() {
-	document.getElementById('feed_name').value = document.getElementById('name').value;
+	var val = document.getElementById('name');
+
+	if(!val) {
+		val = document.getElementById('ajax_select');
+	}
+
+	if(val) {
+		document.getElementById('feed_name').value = val.value;
+	}
 }

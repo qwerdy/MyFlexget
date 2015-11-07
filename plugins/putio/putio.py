@@ -15,7 +15,10 @@ blueprint = Blueprint('putio', __name__, url_prefix='/putio', template_folder='t
 _leftbar = []
 _leftbar.append({'href': '/putio', 'caption': 'Generic'})
 _leftbar.append({'href': '/putio/episode', 'caption': 'Episode'})
-_leftbar.append({'href': '/putio/clean', 'caption': 'Clean list'})
+_leftbar.append({'href': '/putio/info', 'caption': 'Put.io info'})
+_leftbar.append({'href': '/putio/queue', 'caption': 'Queue'})
+_leftbar.append({'href': '#', 'caption': '------'})
+_leftbar.append({'href': '/putio/runscript', 'caption': 'Run script'})
 
 _script = os.path.dirname(os.path.abspath(__file__))
 _script = os.path.join(_script, 'putio_ext', 'putio_download.py')
@@ -35,6 +38,10 @@ def index():
         season = request.form.get('season', '')
         episode = request.form.get('episode', '')
         button = request.form.get('submit', '')
+        prowl = request.form.get('prowl', False)
+        redirect_to_log = request.form.get('redirect_to_log', False)
+
+        is_episode = False
 
         settings = db_get_settings('putio')
         if not 'log_file' in settings:
@@ -42,35 +49,156 @@ def index():
         output = open(settings['log_file'], 'a')
 
         if url and showname and season and episode:
-            subprocess.Popen([_script, url, showname, season, episode], stdout=output, stderr=output, close_fds=True)
+            is_episode = True
+            args = [_script, url, '--showname', showname, '--season', season, '--episode', episode]
+
+            if prowl:
+                args.append('--prowl')
+
+            subprocess.Popen(args, stdout=output, stderr=output, close_fds=True)
         elif url:
             if button == 'Generic':
-                subprocess.Popen([_script, url], stdout=output, stderr=output, close_fds=True)
-            else:
+                args = [_script, url]
+
+                if prowl:
+                    args.append('--prowl')
+
+                subprocess.Popen(args, stdout=output, stderr=output, close_fds=True)
+            elif button == 'Music':
+                args = [_script, url, '--music']
+
+                if prowl:
+                    args.append('--prowl')
+
+                subprocess.Popen(args, stdout=output, stderr=output, close_fds=True)
+            else: # Movie
                 title = title if title else 'auto'
-                subprocess.Popen([_script, url, title], stdout=output, stderr=output, close_fds=True)
+                args = [_script, url, '--moviename', title]
+
+                if prowl:
+                    args.append('--prowl')
+
+                subprocess.Popen(args, stdout=output, stderr=output, close_fds=True)
         else:
             flash('Failed to start download')
             output.close()
             return render_template('putio_generic.html')
 
         output.close()
-        return redirect('/logs/putio.log')
+        if redirect_to_log:
+            return redirect('/logs/putio.log')
+
+        if is_episode:
+            return redirect('/putio/episode')
+        return redirect('/putio')
     else:  # GET
-        return render_template('putio_generic.html', queue=_get_pickles(), transfers=_get_transfers())
+        return render_template('putio_generic.html', queue=_get_pickles(), pidfile=_pidfile_exist())
 
 
 @blueprint.route('/episode')
-def episode():
+def episodeview():
     return render_template('putio_episode.html')
 
+@blueprint.route('/info')
+def info():
+    return render_template('putio_putio.html', queue=_get_pickles(), pidfile=_pidfile_exist(), transfers=_get_transfers(), files=_get_files())
 
-@blueprint.route('/clean')
+@blueprint.route('/queue/<pickle>', methods=['GET', 'POST'])
+@blueprint.route('/queue')
+def queue(pickle = False):
+    if request.method == 'POST' and pickle:
+        settings = db_get_settings('putio')
+
+        newName = request.form.get('newName', '')
+
+        if pickle and newName != pickle and 'work_dir' in settings:
+            ret = os.rename(os.path.join(settings['work_dir'], pickle), os.path.join(settings['work_dir'], newName))
+            if ret:
+                flash('Renamed pickle to: ' + newName)
+            else:
+                flash('Failed to rename pickle')
+            pickle = False
+        else:
+            flash('Weirdness')
+    return render_template('putio_queue.html', queue=_get_pickles(), pickle=pickle)
+
+
+@blueprint.route('/runscript')
+def runscript():
+    settings = db_get_settings('putio')
+    if not 'log_file' in settings:
+        output = None
+    output = open(settings['log_file'], 'a')
+    subprocess.Popen([_script], stdout=output, stderr=output, close_fds=True)
+
+    return redirect('/putio')
+
+
+@blueprint.route('/clean/transfers')
 def clean():
     settings = db_get_settings('putio')
     if 'token' in settings:
         client = Client(settings['token'])
         client.Transfer.clean()
+    return redirect('/putio')
+
+
+@blueprint.route('/delete/download/<file_id>')
+def delete_dlownload(file_id):
+    settings = db_get_settings('putio')
+    if not 'token' in settings:
+        return redirect('/putio')
+    client = Client(settings['token'])
+    response = client.File.delete(file_id)
+    if response:
+        flash('Deleted put.io download with id: ' + file_id)
+    return redirect('/putio')
+
+
+@blueprint.route('/delete/pickle/<pickle>')
+def delete_pickle(pickle):
+    settings = db_get_settings('putio')
+    if not 'work_dir' in settings:
+        flash('Delete failed: No work_dir in settings')
+        return redirect('/putio')
+
+    if not pickle.endswith('.putio.pickle'):
+        flash('Delete failed: Not a putio pickle file')
+        return redirect('/putio')
+
+    pickle_file = os.path.join(settings['work_dir'], pickle)
+
+    if not os.path.isfile(pickle_file):
+        flash('Delete failed: Not a valid file')
+        return redirect('/putio')
+
+    try:
+        os.unlink(pickle_file)
+    except Exception:
+        flash('Delete failed: unlink failed')
+        return redirect('/putio')
+    else:
+        flash('Deleted pickle file: ' + pickle)
+        return redirect('/putio')
+
+
+@blueprint.route('/delete/pidfile')
+def rmpidfile():
+    settings = db_get_settings('putio')
+    if not 'work_dir' in settings:
+        return False
+
+    pidfile = os.path.join(settings['work_dir'], 'putio_flexget.pid')
+
+    if not os.path.isfile(pidfile):
+        flash('Delete failed: pidfile does not exist')
+    try:
+        os.unlink(pidfile)
+    except Exception:
+        flash('Delete failed: failed to delete: '+ pidfile)
+    else:
+        flash('Deleted pidfile: ' + pidfile)
+
     return redirect('/putio')
 
 
@@ -80,6 +208,14 @@ def _get_transfers():
         return
     client = Client(settings['token'])
     return client.Transfer.list()
+
+
+def _get_files():
+    settings = db_get_settings('putio')
+    if not 'token' in settings:
+        return
+    client = Client(settings['token'])
+    return client.File.list()
 
 
 def _get_pickles():
@@ -95,6 +231,15 @@ def _get_pickles():
     return queue
 
 
+def _pidfile_exist():
+    settings = db_get_settings('putio')
+    if not 'work_dir' in settings:
+        return False
+
+    return os.path.isfile(os.path.join(settings['work_dir'], 'putio_flexget.pid'))
+
+
+
 def settings():
     if request.method == 'POST':
         token = request.form.get('token', '')
@@ -102,6 +247,7 @@ def settings():
         show_dir = request.form.get('show_dir', '')
         movie_dir = request.form.get('movie_dir', '')
         generic_dir = request.form.get('generic_dir', '')
+        music_dir = request.form.get('music_dir', '')
         log_file = request.form.get('log_file', '')
 
         #Nasty !!!!
@@ -120,6 +266,8 @@ def settings():
                     line = re.sub(r"'.*'$", "'%s'" % movie_dir, line)
                 elif 'GENERIC_DIR =' in line:
                     line = re.sub(r"'.*'$", "'%s'" % generic_dir, line)
+                elif 'MUSIC_DIR =' in line:
+                    line = re.sub(r"'.*'$", "'%s'" % music_dir, line)
                 elif 'LOG_FILE =' in line:
                     last = True
                     line = re.sub(r"'.*'$", "'%s'" % log_file, line)
@@ -133,6 +281,7 @@ def settings():
                         show_dir=show_dir,
                         movie_dir=movie_dir,
                         generic_dir=generic_dir,
+                        music_dir=music_dir,
                         log_file=log_file
                         )
         db_set_settings('putio', settings, clean=True)

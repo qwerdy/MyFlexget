@@ -4,17 +4,34 @@
 {% block form %}
 {% endblock %}
 
+{% if pidfile %}
+    <h2 class="ib">Script currently running</h2> <small>[<a onclick="return confirm('Are you sure?');" href="/putio/delete/pidfile">Remove pid</a>]</small>
+{% endif %}
+
+{% if files %}
+    <h2>Files</h2>
+    {% for t in files|reverse %}
+        <p>
+            <img src="{{ t.icon }}" />
+            <b>{{ t.name }}</b>
+            <br>{{ t.size//1024//1024 }} MB <small>[<a onclick="return confirm('Are you sure?');" href="/putio/delete/download/{{ t.id }}">Delete</a>]</small>
+        </p>
+    {% endfor %}
+{% endif %}
+
 {% if transfers %}
-    <h2>Transfers</h2>
+    <h2 class="ib">Transfers</h2> <small>[<a onclick="return confirm('Are you sure?');" href="/putio/clean/transfers">Clean transfers</a>]</small>
     {% for t in transfers|reverse %}
     	<p>
-        <b>{{ t.name }}</b>
-        <br>{{ t.status }}
-        {% if t.status == "DOWNLOADING" %}
-            ({{ t.percent_done }}% / {{ t.availability }})
-            <br>{{ t.estimated_time//60 }} minutes
-            <br><small>{{ t.status_message}}</small>
-        {% endif %}
+            <b>{{ t.name }}</b>
+            <br>{{ t.status }}
+            {% if t.status == "DOWNLOADING" %}
+                ({{ t.percent_done }}% / {{ t.availability }})
+                {% if t.estimated_time %}
+                    <br>{{ t.estimated_time//60 }} minutes
+                {% endif %}
+                <br><small>{{ t.status_message}}</small>
+            {% endif %}
         </p>
     {% endfor %}
 {% endif %}
@@ -23,7 +40,7 @@
     <h3>Queue</h3>
     <ul>
     {% for q in queue %}
-        <li>{{ q }}</li>
+        <li>{{ q }} <small>[<a onclick="return confirm('Are you sure?');" href="/putio/delete/pickle/{{ q }}">Delete</a>]</small></li>
     {% endfor %}
     </ul>
 {% endif %}
