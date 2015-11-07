@@ -39,7 +39,7 @@ def flexget(runnow=False):
         db.close()
         return
     devnull = open(os.devnull, 'w')
-    subprocess.Popen([settings['flexget'], '-c', os.path.join(app_folder, 'tmp', 'testconfig.yml'), 'execute', '-v', '--cron'],
+    subprocess.Popen([settings['flexget'], '-c', os.path.join(app_folder, 'tmp', 'testconfig.yml'), '-L', 'verbose', '--cron', 'execute', '-v'],
                      stdout=devnull, stderr=devnull, close_fds=True)
     devnull.close()
     if not runnow and sess.mysched is not None and len(sess.mysched.get_jobs()) == 1 and 'email' in settings:  # Last call ?!
@@ -132,18 +132,21 @@ def generateyml(day='', sched=True, notify=True):
         if dq_shows:
             f.write('      ' + settings['dq'] + ':\n')
             for show in dq_shows:
-                f.write('        - ' + show + '\n')
+                f.write('        - "' + show + '"\n')
         if hq_shows and 'hq' in settings:
             f.write('      ' + settings['hq'] + ':\n')
             for show in hq_shows:
-                f.write('        - ' + show + '\n')
+                f.write('        - "' + show + '"\n')
         #f.write('    download: ' + settings['path'] + '\n')
         if 'script_exec' in settings:
             f.write('    exec: ' + settings['script_exec'] + '\n')
 
         f.close()
 
-        if sched and sess.mysched is not None and new_shows:
+        if sched and sess.mysched is not None:
+            if not new_shows:
+                print('No new shows, no scheduler')
+                return True
             f_start = first_show + int(schedule['start'])
             f_end = last_show + int(schedule['start']) + int(schedule['end'])
             #if f_start > 23 or f_end > 23: # crossing midnight
