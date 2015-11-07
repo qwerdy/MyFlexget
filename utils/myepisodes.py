@@ -79,6 +79,8 @@ class Myepisodes(object):
         show_id = None
         show_uniqe = None
         if aq_season and aq_episode:
+            aq_season = str(aq_season)
+            aq_episode = str(aq_episode)
             show_uniqe = '%sx%s' % (aq_season.zfill(2), aq_episode.zfill(2))
         for show in shows:
             if show['showname'].lower() == aq_show.lower():
