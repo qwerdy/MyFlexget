@@ -90,33 +90,7 @@ class Myepisodes(object):
 
         return parser.get_shows()
 
-    def set_aquired(self, aq_show, aq_season = None, aq_episode = None):
-        if aq_season is None and aq_episode is None:
-            return self.set_aquired_by_episode_id(aq_show)
-
-        cur_dir = os.path.dirname(os.path.abspath(__file__))
-        if not os.path.isfile(os.path.join(cur_dir, 'shows.pickle')) or not aq_show.strip():
-            return False
-        shows = pickle.load(open(os.path.join(cur_dir, 'shows.pickle'), 'r'))
-        episode_id = None
-        show_uniqe = None
-        if aq_season and aq_episode:
-            aq_season = str(aq_season)
-            aq_episode = str(aq_episode)
-            show_uniqe = '%sx%s' % (aq_season.zfill(2), aq_episode.zfill(2))
-        for show in shows:
-            if show['showname'].lower() == aq_show.lower():
-                episode_id = show['id']
-                #if exact episode match, break. If no exact match is found, last name match is used.
-                if show_uniqe and show['number'] == show_uniqe:
-                    break
-        if episode_id is None:
-            return False
-
-        return self.set_aquired_by_episode_id('V'+episode_id[1:])
-
-
-    def set_aquired_by_episode_id(self, episode_id):
+    def set_aquired(self, episode_id):
         url = 'http://www.myepisodes.com/ajax/service.php?mode=eps_update'
         if not episode_id.startswith('A'):
             episode_id = 'A' + episode_id
