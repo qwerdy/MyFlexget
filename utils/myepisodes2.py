@@ -90,12 +90,15 @@ class Myepisodes(object):
 
         return parser.get_shows()
 
-    def set_aquired(self, aq_show, aq_season, aq_episode):
+    def set_aquired(self, aq_show, aq_season = None, aq_episode = None):
+        if aq_season is None and aq_episode is None:
+            return self.set_aquired_by_episode_id(aq_show)
+
         cur_dir = os.path.dirname(os.path.abspath(__file__))
         if not os.path.isfile(os.path.join(cur_dir, 'shows.pickle')) or not aq_show.strip():
             return False
         shows = pickle.load(open(os.path.join(cur_dir, 'shows.pickle'), 'r'))
-        show_id = None
+        episode_id = None
         show_uniqe = None
         if aq_season and aq_episode:
             aq_season = str(aq_season)
@@ -103,19 +106,33 @@ class Myepisodes(object):
             show_uniqe = '%sx%s' % (aq_season.zfill(2), aq_episode.zfill(2))
         for show in shows:
             if show['showname'].lower() == aq_show.lower():
-                show_id = show['id']
+                episode_id = show['id']
                 #if exact episode match, break. If no exact match is found, last name match is used.
                 if show_uniqe and show['number'] == show_uniqe:
                     break
-        if show_id is None:
+        if episode_id is None:
             return False
 
+        return self.set_aquired_by_episode_id('V'+episode_id[1:])
+
+
+    def set_aquired_by_episode_id(self, episode_id):
         url = 'http://www.myepisodes.com/ajax/service.php?mode=eps_update'
-        values = {'V'+show_id[1:]: 'true'}
+        if not episode_id.startswith('A'):
+            episode_id = 'A' + episode_id
+        values = {episode_id: 'true'}
         response = self.s.post(url, data=values)
 
         return response
-        return True
+
+    def set_watched(self, episode_id):
+        url = 'http://www.myepisodes.com/ajax/service.php?mode=eps_update'
+        if not episode_id.startswith('V'):
+            episode_id = 'V' + episode_id
+        values = {episode_id: 'true'}
+        response = self.s.post(url, data=values)
+
+        return response
 
 
 class Scrape_dayShows(HTMLParser):
@@ -123,11 +140,13 @@ class Scrape_dayShows(HTMLParser):
     def __init__(self, day='tomorrow'):
         HTMLParser.__init__(self)
         if day == 'today':
-            theDay = date.today()
+            self.theDay = date.today()
         elif day == 'yesterday':
-            theDay = date.today() - timedelta(1)
+            self.theDay = date.today() - timedelta(1)
+        elif day == 'tomorrow':
+            self.theDay = date.today() + timedelta(1)
         else:
-            theDay = date.today() + timedelta(1)
+            self.theDay = None
 
         self.in_episode = False
         self.in_date = False
@@ -139,13 +158,14 @@ class Scrape_dayShows(HTMLParser):
         self.shows = []
         self.buffshow = {}
 
-        one_day_ago = (theDay - timedelta(1)).strftime(self.date_format)
-        two_day_ago = (theDay - timedelta(2)).strftime(self.date_format)
-        three_day_ago = (theDay - timedelta(3)).strftime(self.date_format)
-        four_day_ago = (theDay - timedelta(4)).strftime(self.date_format)
+        if self.theDay is not None:
+            one_day_ago = (self.theDay - timedelta(1)).strftime(self.date_format)
+            two_day_ago = (self.theDay - timedelta(2)).strftime(self.date_format)
+            three_day_ago = (self.theDay - timedelta(3)).strftime(self.date_format)
+            four_day_ago = (self.theDay - timedelta(4)).strftime(self.date_format)
 
-        theDay = theDay.strftime(self.date_format)
-        self.previous_lookup = [theDay, one_day_ago, two_day_ago, three_day_ago, four_day_ago]
+            self.theDay = self.theDay.strftime(self.date_format)
+            self.previous_lookup = [self.theDay, one_day_ago, two_day_ago, three_day_ago, four_day_ago]
 
     #def __del__(self):
     #    print('Scrape_dayShows: __del__')
@@ -181,10 +201,10 @@ class Scrape_dayShows(HTMLParser):
     def handle_data(self, data):
         if self.in_date:
             self.buffshow['time'] = data
-        if self.in_dateA and data in self.previous_lookup:
+        if self.in_dateA and (self.theDay is None or data in self.previous_lookup):
             self.in_validep = True
             self.buffshow['date'] = data.strip()
-            if data in self.previous_lookup[1:]:
+            if self.theDay is not None and data in self.previous_lookup[1:]:
                 self.buffshow['previous'] = True
         elif self.in_validep:
             if self.in_showname:
@@ -201,6 +221,7 @@ class Scrape_dayShows(HTMLParser):
             self.buffshow = {}
         elif self.in_date and tag == 'td':
             self.in_date = False
+            self.in_dateA = False
         elif self.in_showname and tag == 'td':
             self.in_showname = False
         elif self.in_number and tag == 'td':
