@@ -61,7 +61,7 @@ def flexget(runnow=False):
     db.close()
 
 
-def generateyml(day='', sched=True, notify=True):
+def generateyml(day='tomorrow', sched=True, notify=True):
     show_list = sess.myep.get_dayShows(day=day)
     new_shows = 0
     prowl_extra = ''
