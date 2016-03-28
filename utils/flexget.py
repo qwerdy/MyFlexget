@@ -1,8 +1,8 @@
 import utils.session as sess
 from plugins.db import db_get_raw
-from utils import prowlpy
 from myflexget import app_folder
 
+import paho.mqtt.publish as publish
 import pickle
 from datetime import date, timedelta, datetime
 import time
@@ -64,7 +64,7 @@ def flexget(runnow=False):
 def generateyml(day='tomorrow', sched=True, notify=True):
     show_list = sess.myep.get_dayShows(day=day)
     new_shows = 0
-    prowl_extra = ''
+    mqtt_extra = ''
 
     db = db_get_raw()
     settings = query(db, 'select * from settings_new where id="flexget"', parse=True)
@@ -79,12 +79,10 @@ def generateyml(day='tomorrow', sched=True, notify=True):
             db.close()
             return
 
-    prowl = prowlpy.Prowl(settings['p_api']) if 'p_api' in settings else None
-
     if len(show_list) > 0:
         feed_names = {s['name']: s['feed_name'] for s in query(db, 'select name, feed_name from shows order by name')}
         ig_shows = [ss[0] for ss in query(db, 'select name from shows where ignore="1"')]
-        prowl_msg = ''
+        mqtt_msg = ''
         shows = []
         first_show = 25  # invalid value, will be overwritten
         last_show = -1   # ---------------||----------------
@@ -93,12 +91,12 @@ def generateyml(day='tomorrow', sched=True, notify=True):
                 shows.append(show['showname'])
                 if 'previous' not in show:
                     new_shows += 1
-                    prowl_msg += '- ' + show['showname'] + '\n'
+                    mqtt_msg += '- ' + show['showname'] + '\n'
                     airing = int(show['time'][:2])
                     first_show = airing if first_show > airing else first_show
                     last_show = airing if last_show < airing else last_show
                 else:
-                    prowl_extra += '- ' + show['showname'] + '\n'
+                    mqtt_extra += '- ' + show['showname'] + '\n'
             #Rename shows in show_list to match feed_names, show_list is dumped to pickle later:
             show['showname'] = show['showname'] if not show['showname'] in feed_names else feed_names[show['showname']]
 
@@ -164,19 +162,21 @@ def generateyml(day='tomorrow', sched=True, notify=True):
             sess.mysched.add_job(flexget, 'cron', year=tomorrow.year, month=tomorrow.month, day=tomorrow.day, hour=str(f_start)+'-'+str(f_end))
 
     if new_shows == 0:
-        prowl_msg = 'No new episodes today  :('
+        mqtt_msg = 'No new episodes today  :(   '
 
-    if sched and notify:
+    if 'mqtt_server' in settings:
+        s = str(('TV shows (%s)\n%s' % (new_shows, mqtt_msg)).strip())
         try:
-            if prowl is not None:
-                prowl.add('Python', 'TV shows ('+str(new_shows)+')', prowl_msg, -2)
+            publish.single('myflexget/shows', s, hostname=settings['mqtt_server'])
         except Exception as e:
             print(e)
-        if 'email' in settings:
-            msg = prowl_msg
-            if prowl_extra:
-                msg += "\n\nStill looking for:\n"+prowl_extra
-            msg = 'echo "'+msg+'" | mailx -s "Todays episodes '+str(new_shows)+'" '+settings['email']
-            print('Sending sched mail!')
-            subprocess.Popen(msg, shell=True, close_fds=True)
+
+    if sched and notify:
+            if 'email' in settings:
+                msg = mqtt_msg
+                if mqtt_extra:
+                    msg += "\n\nStill looking for:\n"+mqtt_extra
+                msg = 'echo "'+msg+'" | mailx -s "Todays episodes '+str(new_shows)+'" '+settings['email']
+                print('Sending sched mail!')
+                subprocess.Popen(msg, shell=True, close_fds=True)
     return True

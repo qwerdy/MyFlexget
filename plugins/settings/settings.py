@@ -3,7 +3,7 @@ from myflexget import app_folder
 from plugins.db import db_get_settings, db_set_settings
 from utils.functions import value_in_range
 import os
-
+import paho.mqtt.publish as publish
 
 blueprint = Blueprint('settings', __name__, url_prefix='/settings', template_folder='templates')
 
@@ -54,7 +54,7 @@ def index():
         dq = request.form.get('dq', '')
         hq = request.form.get('hq', '')
         limit = request.form.get('limit', '')
-        p_api = request.form.get('p_api', '')
+        mqtt_server = request.form.get('mqtt_server', '')
         script_exec = request.form.get('script_exec', '')
 
         settings = request.form
@@ -71,7 +71,7 @@ def index():
                           'dq': dq,
                           'hq': hq,
                           'limit': limit,
-                          'p_api': p_api,
+                          'mqtt_server': mqtt_server,
                           'script_exec': script_exec,
                           }
                 db_set_settings('flexget', values, clean=True)
@@ -81,6 +81,8 @@ def index():
             flash('ERROR! Missing data!', 'error')
     else:  # GET
         settings = db_get_settings('flexget')
+        if request.args.get('mqtt_test') and 'mqtt_server' in settings:
+            publish.single('myflexget/test', 'Test MQTT from MyFlexget', hostname=settings['mqtt_server'])
 
     return render_template('settings_flexget.html', settings=settings)
 

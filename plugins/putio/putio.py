@@ -3,6 +3,7 @@ from plugins.settings import register_setting
 from putio_ext.putio import Client
 from plugins.db import db_get_settings, db_set_settings
 
+import paho.mqtt.publish as publish
 import os
 import sys
 import subprocess
@@ -38,7 +39,7 @@ def index():
         season = request.form.get('season', '')
         episode = request.form.get('episode', '')
         button = request.form.get('submit', '')
-        prowl = request.form.get('prowl', False)
+        mqtt = request.form.get('mqtt', False)
         redirect_to_log = request.form.get('redirect_to_log', False)
 
         is_episode = False
@@ -52,31 +53,31 @@ def index():
             is_episode = True
             args = [_script, url, '--showname', showname, '--season', season, '--episode', episode]
 
-            if prowl:
-                args.append('--prowl')
+            if mqtt:
+                args.append('--mqtt')
 
             subprocess.Popen(args, stdout=output, stderr=output, close_fds=True)
         elif url:
             if button == 'Generic':
                 args = [_script, url]
 
-                if prowl:
-                    args.append('--prowl')
+                if mqtt:
+                    args.append('--mqtt')
 
                 subprocess.Popen(args, stdout=output, stderr=output, close_fds=True)
             elif button == 'Music':
                 args = [_script, url, '--music']
 
-                if prowl:
-                    args.append('--prowl')
+                if mqtt:
+                    args.append('--mqtt')
 
                 subprocess.Popen(args, stdout=output, stderr=output, close_fds=True)
             else: # Movie
                 title = title if title else 'auto'
                 args = [_script, url, '--moviename', title]
 
-                if prowl:
-                    args.append('--prowl')
+                if mqtt:
+                    args.append('--mqtt')
 
                 subprocess.Popen(args, stdout=output, stderr=output, close_fds=True)
         else:
@@ -243,6 +244,7 @@ def _pidfile_exist():
 def settings():
     if request.method == 'POST':
         token = request.form.get('token', '')
+        mqtt_server = request.form.get('mqtt_server', '')
         work_dir = request.form.get('work_dir', '')
         show_dir = request.form.get('show_dir', '')
         movie_dir = request.form.get('movie_dir', '')
@@ -258,6 +260,8 @@ def settings():
             if not last:
                 if 'TOKEN =' in line:
                     line = re.sub(r"'.*'$", "'%s'" % token, line)
+                elif 'MQTT_SERVER =' in line:
+                    line = re.sub(r"'.*'$", "'%s'" % mqtt_server, line)
                 elif 'WORK_DIR =' in line:
                     line = re.sub(r"'.*'$", "'%s'" % work_dir, line)
                 elif 'SHOW_DIR =' in line:
@@ -277,6 +281,7 @@ def settings():
         flash('Put.io settings updated!')
 
         settings = dict(token=token,
+                        mqtt_server=mqtt_server,
                         work_dir=work_dir,
                         show_dir=show_dir,
                         movie_dir=movie_dir,
@@ -287,6 +292,9 @@ def settings():
         db_set_settings('putio', settings, clean=True)
     else:  # GET
         settings = db_get_settings('putio')
+        if request.args.get('mqtt_test') and mqtt_server in settings:
+            publish.single('myflexget/test', 'Test MQTT from MyFlexget', hostname=settings['mqtt_server'])
+
     return render_template('putio_settings.html', settings=settings)
 
 
